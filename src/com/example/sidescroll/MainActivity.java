@@ -240,52 +240,53 @@ public class MainActivity extends LayoutGameActivity implements
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
 
-//		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(30,
-//				path, null, new IPathModifierListener() {
-//					@Override
-//					public void onPathStarted(final PathModifier pPathModifier,
-//							final IEntity pEntity) {
-//
-//					}
-//
-//					@Override
-//					public void onPathWaypointStarted(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity, final int pWaypointIndex) {
-//						switch (pWaypointIndex) {
-//						case 0:
-//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-//									true);
-//							break;
-//						case 1:
-//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-//									true);
-//							break;
-//						case 2:
-//							mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
-//									true);
-//							break;
-//						case 3:
-//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-//									true);
-//							break;
-//						}
-//					}
-//
-//					@Override
-//					public void onPathWaypointFinished(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity, final int pWaypointIndex) {
-//
-//					}
-//
-//					@Override
-//					public void onPathFinished(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity) {
-//
-//					}
-//				})));
+		// mPet.registerEntityModifier(new LoopEntityModifier(new
+		// PathModifier(30,
+		// path, null, new IPathModifierListener() {
+		// @Override
+		// public void onPathStarted(final PathModifier pPathModifier,
+		// final IEntity pEntity) {
+		//
+		// }
+		//
+		// @Override
+		// public void onPathWaypointStarted(
+		// final PathModifier pPathModifier,
+		// final IEntity pEntity, final int pWaypointIndex) {
+		// switch (pWaypointIndex) {
+		// case 0:
+		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+		// true);
+		// break;
+		// case 1:
+		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+		// true);
+		// break;
+		// case 2:
+		// mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
+		// true);
+		// break;
+		// case 3:
+		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+		// true);
+		// break;
+		// }
+		// }
+		//
+		// @Override
+		// public void onPathWaypointFinished(
+		// final PathModifier pPathModifier,
+		// final IEntity pEntity, final int pWaypointIndex) {
+		//
+		// }
+		//
+		// @Override
+		// public void onPathFinished(
+		// final PathModifier pPathModifier,
+		// final IEntity pEntity) {
+		//
+		// }
+		// })));
 		mGameScene.attachChild(mPet);
 
 		// Analog control
@@ -418,7 +419,7 @@ public class MainActivity extends LayoutGameActivity implements
 		@Override
 		public void onUpdate(float pSecondsElapsed) {
 			if (mPlayer.collidesWith(mPet)) {
-				//mGameScene.detachChild(mPet);
+				// mGameScene.detachChild(mPet);
 			}
 
 			if (mGameScene.getChildByMatcher(new IEntityMatcher() {
@@ -431,7 +432,7 @@ public class MainActivity extends LayoutGameActivity implements
 						return false;
 				}
 			}) == null) {
-				//showGameOver();
+				// showGameOver();
 			}
 
 			float balance = (1 + (mPet.getX() - mPlayer.getX())
@@ -442,8 +443,9 @@ public class MainActivity extends LayoutGameActivity implements
 							.getY())));
 			if (distance < 200) {
 				distance = distance / 200;
-				myMusic.setVolume((pLeftVolume * (1 - balance)) * distance,
-						(pRightVolume * balance) * distance);
+				myMusic.setVolume((pLeftVolume * (1 - balance))
+						* (1 - distance), (pRightVolume * balance)
+						* (1 - distance));
 			} else {
 				myMusic.setVolume(0, 0);
 			}
