@@ -1,5 +1,11 @@
 package com.example.sidescroll;
 
+import java.io.IOException;
+
+import org.andengine.audio.music.Music;
+import org.andengine.audio.music.MusicFactory;
+import org.andengine.audio.sound.Sound;
+import org.andengine.audio.sound.SoundFactory;
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.hud.controls.AnalogOnScreenControl;
@@ -13,6 +19,7 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.IEntity;
+import org.andengine.entity.IEntityMatcher;
 import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.PathModifier;
 import org.andengine.entity.modifier.ScaleModifier;
@@ -77,8 +84,8 @@ public class MainActivity extends LayoutGameActivity implements
 
 	// 4. Game Scene
 	private Scene mGameScene;
-	private AnimatedSprite mWoman;
 	private AnimatedSprite mPlayer;
+	private AnimatedSprite mPet;
 
 	// 5. Game Analog control
 	private BitmapTextureAtlas mOnScreenControlTexture;
@@ -88,18 +95,28 @@ public class MainActivity extends LayoutGameActivity implements
 	private BuildableBitmapTextureAtlas mBitmapTextureAtlas;
 	private BitmapTextureAtlas mPetTextureAtlas;
 
-	private TiledTextureRegion mWomanTextureRegion;
 	private TiledTextureRegion mPlayerTextureRegion;
+	private TiledTextureRegion mPetTextureRegion;
 	private RepeatingSpriteBackground mGrassBackground;
 
 	// 6. Game Elements
 	private GameUpdateHandler mGameUpdateHandler;
+	private Sound mySound;
+	private Music myMusic;
+
+	public float pLeftVolume = 1;
+
+	public float pRightVolume = 1;
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
-				new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), mCamera);
+		EngineOptions engineOptions = new EngineOptions(true,
+				ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(
+						CAMERA_WIDTH, CAMERA_HEIGHT), mCamera);
+		engineOptions.getAudioOptions().setNeedsMusic(true);
+		engineOptions.getAudioOptions().setNeedsSound(true);
+		return engineOptions;
 	}
 
 	@Override
@@ -107,17 +124,31 @@ public class MainActivity extends LayoutGameActivity implements
 			OnCreateResourcesCallback pOnCreateResourcesCallback)
 			throws Exception {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		SoundFactory.setAssetBasePath("mfx/");
+		MusicFactory.setAssetBasePath("mfx/");
 		loadSplashSceneResources();
 		loadGameSceneResources();
+		loadAudio();
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
+	}
+
+	private void loadAudio() {
+		try {
+			this.myMusic = MusicFactory.createMusicFromAsset(
+					this.mEngine.getMusicManager(), this, "heartbeat.ogg");
+			this.myMusic.setLooping(true);
+		} catch (final IOException e) {
+			Debug.e(e);
+		}
+
 	}
 
 	private void loadGameSceneResources() {
 		this.mBitmapTextureAtlas = new BuildableBitmapTextureAtlas(
-				this.getTextureManager(), 512, 256, TextureOptions.NEAREST);
-		this.mWomanTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				this.getTextureManager(), 512, 512, TextureOptions.NEAREST);
+		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
-						"straight.png", 3, 1);
+						"player.png", 4, 4);
 
 		try {
 			this.mBitmapTextureAtlas
@@ -129,10 +160,10 @@ public class MainActivity extends LayoutGameActivity implements
 		}
 		// Pet resources
 		this.mPetTextureAtlas = new BitmapTextureAtlas(
-				this.getTextureManager(), 128, 128);
-		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createTiledFromAsset(this.mPetTextureAtlas, this,
-						"player.png", 0, 0, 3, 4);
+				this.getTextureManager(), 150, 150);
+		this.mPetTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mPetTextureAtlas, this, "pet.png",
+						0, 0, 3, 3);
 		this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH,
 				CAMERA_HEIGHT, this.getTextureManager(),
 				AssetBitmapTextureAtlasSource.create(this.getAssets(),
@@ -180,80 +211,82 @@ public class MainActivity extends LayoutGameActivity implements
 	protected void setGameScene() {
 		mGameScene = new Scene();
 		mGameScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
-		mWoman = new AnimatedSprite(150, 220, mWomanTextureRegion,
+		mPlayer = new AnimatedSprite(250, 220, mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
-		mWoman.animate(200);
-		mGameScene.attachChild(mWoman);
-		final PhysicsHandler physicsHandler = new PhysicsHandler(mWoman);
-		mWoman.registerUpdateHandler(physicsHandler);
+		long[] eachFrmTime = { 200, 200, 200, 200 };
+		int[] eachFrm = { 8, 9, 10, 11 };
+		mPlayer.animate(eachFrmTime, eachFrm);
 
-		// Pet and Backgorund
+		mGameScene.attachChild(mPlayer);
+		final PhysicsHandler physicsHandler = new PhysicsHandler(mPlayer);
+		mPlayer.registerUpdateHandler(physicsHandler);
+
+		// Pet and Background
 		mGameScene.setBackground(this.mGrassBackground);
 
 		/*
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
 		 */
-		final float centerX = (CAMERA_WIDTH - this.mPlayerTextureRegion
-				.getWidth()) / 2;
-		final float centerY = (CAMERA_HEIGHT - this.mPlayerTextureRegion
+		final float centerX = (CAMERA_WIDTH - this.mPetTextureRegion.getWidth()) / 2;
+		final float centerY = (CAMERA_HEIGHT - this.mPetTextureRegion
 				.getHeight()) / 2;
 
 		/* Create the sprite and add it to the scene. */
-		mPlayer = new AnimatedSprite(centerX, centerY, 48, 64,
-				this.mPlayerTextureRegion, this.getVertexBufferObjectManager());
+		mPet = new AnimatedSprite(centerX, centerY, 48, 64,
+				this.mPetTextureRegion, this.getVertexBufferObjectManager());
 
 		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
 
-		mPlayer.registerEntityModifier(new LoopEntityModifier(new PathModifier(
-				30, path, null, new IPathModifierListener() {
-					@Override
-					public void onPathStarted(final PathModifier pPathModifier,
-							final IEntity pEntity) {
-
-					}
-
-					@Override
-					public void onPathWaypointStarted(
-							final PathModifier pPathModifier,
-							final IEntity pEntity, final int pWaypointIndex) {
-						switch (pWaypointIndex) {
-						case 0:
-							mPlayer.animate(new long[] { 200, 200, 200 }, 6, 8,
-									true);
-							break;
-						case 1:
-							mPlayer.animate(new long[] { 200, 200, 200 }, 3, 5,
-									true);
-							break;
-						case 2:
-							mPlayer.animate(new long[] { 200, 200, 200 }, 0, 2,
-									true);
-							break;
-						case 3:
-							mPlayer.animate(new long[] { 200, 200, 200 }, 9,
-									11, true);
-							break;
-						}
-					}
-
-					@Override
-					public void onPathWaypointFinished(
-							final PathModifier pPathModifier,
-							final IEntity pEntity, final int pWaypointIndex) {
-
-					}
-
-					@Override
-					public void onPathFinished(
-							final PathModifier pPathModifier,
-							final IEntity pEntity) {
-
-					}
-				})));
-		mGameScene.attachChild(mPlayer);
+//		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(30,
+//				path, null, new IPathModifierListener() {
+//					@Override
+//					public void onPathStarted(final PathModifier pPathModifier,
+//							final IEntity pEntity) {
+//
+//					}
+//
+//					@Override
+//					public void onPathWaypointStarted(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity, final int pWaypointIndex) {
+//						switch (pWaypointIndex) {
+//						case 0:
+//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+//									true);
+//							break;
+//						case 1:
+//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+//									true);
+//							break;
+//						case 2:
+//							mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
+//									true);
+//							break;
+//						case 3:
+//							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+//									true);
+//							break;
+//						}
+//					}
+//
+//					@Override
+//					public void onPathWaypointFinished(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity, final int pWaypointIndex) {
+//
+//					}
+//
+//					@Override
+//					public void onPathFinished(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity) {
+//
+//					}
+//				})));
+		mGameScene.attachChild(mPet);
 
 		// Analog control
 		final AnalogOnScreenControl analogOnScreenControl = new AnalogOnScreenControl(
@@ -274,7 +307,7 @@ public class MainActivity extends LayoutGameActivity implements
 					@Override
 					public void onControlClick(
 							final AnalogOnScreenControl pAnalogOnScreenControl) {
-						mWoman.registerEntityModifier(new SequenceEntityModifier(
+						mPlayer.registerEntityModifier(new SequenceEntityModifier(
 								new ScaleModifier(0.25f, 1, 1.5f),
 								new ScaleModifier(0.25f, 1.5f, 1)));
 					}
@@ -298,10 +331,14 @@ public class MainActivity extends LayoutGameActivity implements
 			public void run() {
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this,
-						"Its dark our there! You have save your BOYFRIEND.",
+						"Its dark our there! You have save your Pet.",
 						Toast.LENGTH_LONG).show();
 			}
 		});
+
+		// start music
+		this.myMusic.play();
+		this.myMusic.setVolume(0.5f, 1.0f);
 	}
 
 	@Override
@@ -370,7 +407,7 @@ public class MainActivity extends LayoutGameActivity implements
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
 		if (pSceneTouchEvent.isActionDown()) {
-			Sprite s = (Sprite) pScene.getChildByTag(mWoman.getTag());
+			Sprite s = (Sprite) pScene.getChildByTag(mPlayer.getTag());
 			s.setPosition(s.getX() + (i++), s.getY());
 		}
 		return false;
@@ -380,10 +417,36 @@ public class MainActivity extends LayoutGameActivity implements
 
 		@Override
 		public void onUpdate(float pSecondsElapsed) {
-			if (mWoman.collidesWith(mPlayer)) {
-				showGameOver();
+			if (mPlayer.collidesWith(mPet)) {
+				//mGameScene.detachChild(mPet);
 			}
 
+			if (mGameScene.getChildByMatcher(new IEntityMatcher() {
+
+				@Override
+				public boolean matches(IEntity pEntity) {
+					if (pEntity == mPet)
+						return true;
+					else
+						return false;
+				}
+			}) == null) {
+				//showGameOver();
+			}
+
+			float balance = (1 + (mPet.getX() - mPlayer.getX())
+					/ (CAMERA_WIDTH / 2)) / 2;
+			float distance = (float) Math.sqrt((mPet.getX() - mPlayer.getX())
+					* (mPet.getX() - mPlayer.getX())
+					+ ((mPet.getY() - mPlayer.getY()) * (mPet.getY() - mPlayer
+							.getY())));
+			if (distance < 200) {
+				distance = distance / 200;
+				myMusic.setVolume((pLeftVolume * (1 - balance)) * distance,
+						(pRightVolume * balance) * distance);
+			} else {
+				myMusic.setVolume(0, 0);
+			}
 		}
 
 		@Override
@@ -400,7 +463,7 @@ public class MainActivity extends LayoutGameActivity implements
 			public void run() {
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this,
-						"Yaay! You saved your Boyfriend. Now enjoy!",
+						"Yaay! You saved your Pet. Now enjoy!",
 						Toast.LENGTH_LONG).show();
 			}
 		});
