@@ -221,7 +221,7 @@ public class MainActivity extends LayoutGameActivity implements
 		this.mOverlayTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), CAMERA_WIDTH * 2, CAMERA_HEIGHT * 2);
 		this.mOverlayTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mOverlayTextureAtlas, this, "overlaybg.png",
+				.createFromAsset(mOverlayTextureAtlas, this, "overlaybg2.png",
 						0, 0);
 		this.mOverlayTextureAtlas.load();
 
@@ -525,7 +525,7 @@ public class MainActivity extends LayoutGameActivity implements
 		mOverlay = new Sprite(0, 0, mOverlayTextureRegion,
 				this.getVertexBufferObjectManager());
 
-		float overlayX = playerCenterX - mOverlay.getWidth() / 2;
+		float overlayX = playerCenterX - mOverlay.getWidth() / 2 + 20;
 		float overlayY = playerCenterY - mOverlay.getHeight() / 2 + 40;
 
 		mOverlay.setX(overlayX);
@@ -548,10 +548,60 @@ public class MainActivity extends LayoutGameActivity implements
 					public void onControlChange(
 							final BaseOnScreenControl pBaseOnScreenControl,
 							final float pValueX, final float pValueY) {
-						physicsHandler
-								.setVelocity(pValueX * 100, pValueY * 100);
-						physicsHandler2.setVelocity(pValueX * 100,
-								pValueY * 100);
+						float incX = 0, incY = 0;
+						// left
+						if (mPlayer.getX() >= 0 && pValueX > 0) {
+							incX = pValueX * 100;
+						}
+
+						if (mPlayer.getX() < 0) {
+							mPlayer.setX(0);
+							mOverlay.setX(mPlayer.getWidth() / 2
+									- mOverlay.getWidth() / 2 + 20);
+							incX = 0;
+						}
+
+						// top
+						if (mPlayer.getY() >= 0 && pValueY > 0) {
+							incY = pValueY * 100;
+						}
+
+						if (mPlayer.getY() < 0) {
+							mPlayer.setY(0);
+							mOverlay.setY(mPlayer.getWidth() / 2
+									- mOverlay.getHeight() / 2 + 40);
+							incY = 0;
+						}
+
+						// right
+						if (mPlayer.getX() + mPlayer.getWidth() <= CAMERA_WIDTH
+								&& pValueX < 0) {
+							incX = pValueX * 100;
+						}
+
+						if (mPlayer.getX() + mPlayer.getWidth() > CAMERA_WIDTH - 20) {
+							mPlayer.setX(CAMERA_WIDTH - mPlayer.getWidth() - 20);
+							mOverlay.setX(mPlayer.getX() + mPlayer.getWidth()
+									/ 2 - mOverlay.getWidth() / 2 + 20);
+							incX = 0;
+						}
+
+						// bottom
+						if (mPlayer.getY() + mPlayer.getHeight() <= CAMERA_HEIGHT
+								&& pValueY < 0) {
+							incY = pValueY * 100;
+						}
+
+						if (mPlayer.getY() + mPlayer.getHeight() > CAMERA_HEIGHT - 20) {
+							mPlayer.setY(CAMERA_HEIGHT - mPlayer.getHeight()
+									- 20);
+							mOverlay.setY(mPlayer.getY() + mPlayer.getHeight()
+									/ 2 - mOverlay.getHeight() / 2 + 40);
+							incY = 0;
+						}
+
+						physicsHandler.setVelocity(incX, incY);
+						physicsHandler2.setVelocity(incX, incY);
 					}
 
 					@Override
@@ -833,7 +883,8 @@ public class MainActivity extends LayoutGameActivity implements
 				this.getTextureManager(), 400, 600, TextureOptions.BILINEAR);
 		// Font
 		this.mFont = FontFactory.create(getFontManager(), getTextureManager(),
-				100, 100, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20);
+				100, 100, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20,
+				Color.WHITE);
 		this.mFont.load();
 
 		this.mWonLostFont = FontFactory.createFromAsset(this.getFontManager(),
