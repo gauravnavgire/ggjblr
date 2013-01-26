@@ -86,6 +86,10 @@ public class MainActivity extends LayoutGameActivity implements
 	private ITextureRegion mSplashTextureRegion;
 	private Sprite mSplash;
 
+	private Sprite mOverlay;
+	private BitmapTextureAtlas mOverlayTextureAtlas;
+	private ITextureRegion mOverlayTextureRegion;
+
 	// 2. Menu Scene
 	private Scene mMenuScene;
 
@@ -197,6 +201,14 @@ public class MainActivity extends LayoutGameActivity implements
 				.createFromAsset(this.mOnScreenControlTexture, this,
 						"onscreen_control_knob.png", 128, 0);
 		this.mOnScreenControlTexture.load();
+
+		this.mOverlayTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), CAMERA_WIDTH * 2, CAMERA_HEIGHT * 2);
+		this.mOverlayTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(mOverlayTextureAtlas, this, "overlaybg.png",
+						0, 0);
+		this.mOverlayTextureAtlas.load();
+
 	}
 
 	private void loadAnimalResources() {
@@ -489,6 +501,25 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene.attachChild(mCocoTree);
 		// mGameScene.attachChild(mButterfly);
 
+		// attach overlay image
+		float playerCenterX = this.mPlayer.getX() + this.mPlayer.getWidth() / 2;
+		float playerCenterY = this.mPlayer.getY() + this.mPlayer.getHeight()
+				/ 2;
+
+		mOverlay = new Sprite(0, 0, mOverlayTextureRegion,
+				this.getVertexBufferObjectManager());
+
+		float overlayX = playerCenterX - mOverlay.getWidth() / 2;
+		float overlayY = playerCenterY - mOverlay.getHeight() / 2+40;
+
+		mOverlay.setX(overlayX);
+		mOverlay.setY(overlayY);
+
+		mGameScene.attachChild(mOverlay);
+
+		final PhysicsHandler physicsHandler2 = new PhysicsHandler(mOverlay);
+		mPlayer.registerUpdateHandler(physicsHandler2);
+
 		// Analog control
 		final AnalogOnScreenControl analogOnScreenControl = new AnalogOnScreenControl(
 				0, CAMERA_HEIGHT
@@ -503,14 +534,17 @@ public class MainActivity extends LayoutGameActivity implements
 							final float pValueX, final float pValueY) {
 						physicsHandler
 								.setVelocity(pValueX * 100, pValueY * 100);
+						physicsHandler2.setVelocity(pValueX * 100,
+								pValueY * 100);
 					}
 
 					@Override
 					public void onControlClick(
 							final AnalogOnScreenControl pAnalogOnScreenControl) {
-						mPlayer.registerEntityModifier(new SequenceEntityModifier(
-								new ScaleModifier(0.25f, 1, 1.5f),
-								new ScaleModifier(0.25f, 1.5f, 1)));
+						// mPlayer.registerEntityModifier(new
+						// SequenceEntityModifier(
+						// new ScaleModifier(0.25f, 1, 1.5f),
+						// new ScaleModifier(0.25f, 1.5f, 1)));
 					}
 				});
 		analogOnScreenControl.getControlBase().setBlendFunction(
@@ -549,7 +583,7 @@ public class MainActivity extends LayoutGameActivity implements
 
 		// start music
 		this.myMusic.play();
-		this.myMusic.setVolume(0.5f, 1.0f);
+		this.myMusic.setVolume(1.0f, 1.0f);
 	}
 
 	@Override
@@ -734,8 +768,8 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
 
 		mEatsText = new Text(50, 150, mWonLostFont,
-				"\t\t\t\t\t\t\t\tYaay!\n You saved your Pet.\n You took " + time
-						+ " secs to save him.\n Your Bonding is "
+				"\t\t\t\t\t\t\t\tYaay!\n You saved your Pet.\n You took "
+						+ time + " secs to save him.\n Your Bonding is "
 						+ (time + bonus) + " points.\n " + congo,
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
@@ -749,8 +783,8 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
 		// Create gameover image and attach it
 		mEatsText = new Text(50, 150, mWonLostFont,
-				"\t\t\t\t\t\t\t\tSorry!\n You were not able save your pet.\n You tried for " + time
-						+ " secs.\n Your Bonding is 0 points.",
+				"\t\t\t\t\t\t\t\tSorry!\n You were not able save your pet.\n You tried for "
+						+ time + " secs.\n Your Bonding is 0 points.",
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
 	}
@@ -765,8 +799,8 @@ public class MainActivity extends LayoutGameActivity implements
 		this.mFont.load();
 
 		this.mWonLostFont = FontFactory.createFromAsset(this.getFontManager(),
-				wonLostFontTexture, this.getAssets(), "Plok.ttf",
-				25, true, Color.RED);
+				wonLostFontTexture, this.getAssets(), "Plok.ttf", 25, true,
+				Color.RED);
 		this.mWonLostFont.load();
 	}
 
