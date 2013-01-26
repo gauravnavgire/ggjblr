@@ -1,6 +1,7 @@
 package com.example.sidescroll;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 import org.andengine.audio.music.Music;
 import org.andengine.audio.music.MusicFactory;
@@ -30,10 +31,14 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
+import org.andengine.entity.shape.IShape;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -43,14 +48,19 @@ import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSourc
 import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
 import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.util.GLState;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.view.RenderSurfaceView;
 import org.andengine.ui.activity.LayoutGameActivity;
 import org.andengine.util.debug.Debug;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.provider.Settings.System;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
@@ -85,7 +95,8 @@ public class MainActivity extends LayoutGameActivity implements
 	// 4. Game Scene
 	private Scene mGameScene;
 	private AnimatedSprite mPlayer;
-	private AnimatedSprite mPet;
+	private AnimatedSprite mPet, mWolf, mBoar, mButterfly;
+	private Sprite mDeadTree, mNiceTree, mCocoTree, mPond;
 
 	// 5. Game Analog control
 	private BitmapTextureAtlas mOnScreenControlTexture;
@@ -96,8 +107,10 @@ public class MainActivity extends LayoutGameActivity implements
 	private BitmapTextureAtlas mPetTextureAtlas;
 
 	private TiledTextureRegion mPlayerTextureRegion;
-	private TiledTextureRegion mPetTextureRegion;
+	private TiledTextureRegion mAnimalsTextureRegion;
 	private RepeatingSpriteBackground mGrassBackground;
+	private TextureRegion mDeadTreeTextureRegion, mNiceTreeTextureRegion,
+			mCocoTreeTextureRegion, mPondTextureRegion;
 
 	// 6. Game Elements
 	private GameUpdateHandler mGameUpdateHandler;
@@ -107,6 +120,11 @@ public class MainActivity extends LayoutGameActivity implements
 	public float pLeftVolume = 1;
 
 	public float pRightVolume = 1;
+
+	// 7. Texts
+	private Font mFont, mWonLostFont;
+	private Text mEatenText, mEngineUpdateText, mEatsText;
+	private VertexBufferObjectManager mVertexBufferObjectManager;
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -123,11 +141,13 @@ public class MainActivity extends LayoutGameActivity implements
 	public void onCreateResources(
 			OnCreateResourcesCallback pOnCreateResourcesCallback)
 			throws Exception {
+		mVertexBufferObjectManager = this.getVertexBufferObjectManager();
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		SoundFactory.setAssetBasePath("mfx/");
 		MusicFactory.setAssetBasePath("mfx/");
 		loadSplashSceneResources();
 		loadGameSceneResources();
+		loadFont();
 		loadAudio();
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
@@ -158,19 +178,14 @@ public class MainActivity extends LayoutGameActivity implements
 		} catch (TextureAtlasBuilderException e) {
 			Debug.e(e);
 		}
-		// Pet resources
-		this.mPetTextureAtlas = new BitmapTextureAtlas(
-				this.getTextureManager(), 150, 200);
-		this.mPetTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createTiledFromAsset(this.mPetTextureAtlas, this, "pet.png",
-						0, 0, 3, 4);
+
 		this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH,
 				CAMERA_HEIGHT, this.getTextureManager(),
 				AssetBitmapTextureAtlasSource.create(this.getAssets(),
-						"gfx/background_grass.png"),
-				this.getVertexBufferObjectManager());
-		this.mPetTextureAtlas.load();
+						"gfx/background_grass.png"), mVertexBufferObjectManager);
 		this.mBitmapTextureAtlas.load();
+
+		loadAnimalResources();
 
 		// Analog control resources
 		this.mOnScreenControlTexture = new BitmapTextureAtlas(
@@ -182,6 +197,36 @@ public class MainActivity extends LayoutGameActivity implements
 				.createFromAsset(this.mOnScreenControlTexture, this,
 						"onscreen_control_knob.png", 128, 0);
 		this.mOnScreenControlTexture.load();
+	}
+
+	private void loadAnimalResources() {
+		// Pet resources
+		this.mPetTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 700, 700);
+		// this.mPetTextureRegion = BitmapTextureAtlasTextureRegionFactory
+		// .createTiledFromAsset(this.mPetTextureAtlas, this, "pet.png",
+		// 0, 0, 3, 4);
+
+		this.mAnimalsTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mPetTextureAtlas, this,
+						"animals.png", 0, 0, 12, 8);
+
+		BitmapTextureAtlas treeTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 400, 400);
+		this.mDeadTreeTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(treeTextureAtlas, this, "deadtree.png", 0, 0);
+		this.mNiceTreeTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(treeTextureAtlas, this, "tree.png",
+						(int) mDeadTreeTextureRegion.getWidth() + 1, 0);
+		this.mCocoTreeTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(treeTextureAtlas, this, "cocotree.png",
+						(int) mNiceTreeTextureRegion.getWidth() + 1, 0);
+		this.mPondTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(treeTextureAtlas, this, "pond.png", 0,
+						(int) mDeadTreeTextureRegion.getHeight() + 50);
+		treeTextureAtlas.load();
+		this.mPetTextureAtlas.load();
+
 	}
 
 	@Override
@@ -212,7 +257,7 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene = new Scene();
 		mGameScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 		mPlayer = new AnimatedSprite(250, 220, mPlayerTextureRegion,
-				this.getVertexBufferObjectManager());
+				mVertexBufferObjectManager);
 		long[] eachFrmTime = { 200, 200, 200, 200 };
 		int[] eachFrm = { 8, 9, 10, 11 };
 		mPlayer.animate(eachFrmTime, eachFrm);
@@ -228,40 +273,69 @@ public class MainActivity extends LayoutGameActivity implements
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
 		 */
-		final float centerX = (CAMERA_WIDTH - this.mPetTextureRegion.getWidth()) / 2;
-		final float centerY = (CAMERA_HEIGHT - this.mPetTextureRegion
+		final float centerX = (CAMERA_WIDTH - this.mAnimalsTextureRegion
+				.getWidth()) / 2;
+		final float centerY = (CAMERA_HEIGHT - this.mAnimalsTextureRegion
 				.getHeight()) / 2;
 
 		/* Create the sprite and add it to the scene. */
+		// trees
+		mDeadTree = new Sprite(70, 70, this.mDeadTreeTextureRegion,
+				mVertexBufferObjectManager);
+		mNiceTree = new Sprite(300, 40, this.mNiceTreeTextureRegion,
+				mVertexBufferObjectManager);
+		mCocoTree = new Sprite(420, 120, this.mCocoTreeTextureRegion,
+				mVertexBufferObjectManager);
+		mPond = new Sprite(350, 300, this.mPondTextureRegion,
+				mVertexBufferObjectManager);
+		mGameScene.attachChild(mDeadTree);
+		// mGameScene.attachChild(mNiceTree);
+		mGameScene.attachChild(mPond);
+
 		mPet = new AnimatedSprite(centerX, centerY, 24, 32,
-				this.mPetTextureRegion, this.getVertexBufferObjectManager());
+				this.mAnimalsTextureRegion, mVertexBufferObjectManager);
+		mPet.setTag(100);
+
+		mWolf = new AnimatedSprite(70, 160, 50, 70, this.mAnimalsTextureRegion,
+				mVertexBufferObjectManager);
+		mWolf.setTag(101);
+		long[] wolfFrmTime = { 200, 200, 200 };
+		int[] wolfFrm = { 66, 67, 68 };
+		mWolf.animate(wolfFrmTime, wolfFrm);
+
+		mBoar = new AnimatedSprite(centerX + 160, centerY - 50, 60, 80,
+				this.mAnimalsTextureRegion, mVertexBufferObjectManager);
+		mBoar.setTag(102);
+		long[] boarFrmTime = { 200, 200, 200 };
+		int[] boarFrm = { 72, 73, 74 };
+		mBoar.animate(boarFrmTime, boarFrm);
+
+		mButterfly = new AnimatedSprite(CAMERA_WIDTH - 50, centerY, 30, 50,
+				this.mAnimalsTextureRegion, mVertexBufferObjectManager);
+		mButterfly.setTag(103);
+		long[] bflyFrmTime = { 200, 200, 200 };
+		int[] bflyFrm = { 57, 58, 59 };
+		mButterfly.animate(bflyFrmTime, bflyFrm);
 
 		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
 
-		final Path path2 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH/2 - 58, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
-		
-		final Path path3 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH/2 - 58, 10).to(10, 10);
-		
-		final Path path4 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT/2 - 74)
-		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
-		
+		final Path path4 = new Path(5).to(10, 10)
+				.to(10, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
+				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+
 		final Path path5 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT/2 - 74)
-		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
-		
-		final Path path6 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
-		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT/2 - 74)
-		.to(CAMERA_WIDTH/2 - 58, 10).to(10, 10);
-		
-		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(30,
-				path6, null, new IPathModifierListener() {
+				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+
+		final Path path6 = new Path(5).to(CAMERA_WIDTH - 58, 10)
+				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
+				.to(10, CAMERA_HEIGHT / 2 - 74).to(10, 10);
+
+		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(60,
+				path, null, new IPathModifierListener() {
 					@Override
 					public void onPathStarted(final PathModifier pPathModifier,
 							final IEntity pEntity) {
@@ -278,15 +352,15 @@ public class MainActivity extends LayoutGameActivity implements
 									true);
 							break;
 						case 1:
-							mPet.animate(new long[] { 200, 200, 200 }, 3, 5,
+							mPet.animate(new long[] { 200, 200, 200 }, 24, 26,
 									true);
 							break;
 						case 2:
-							mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
+							mPet.animate(new long[] { 200, 200, 200 }, 36, 38,
 									true);
 							break;
 						case 3:
-							mPet.animate(new long[] { 200, 200, 200 }, 9, 11,
+							mPet.animate(new long[] { 200, 200, 200 }, 12, 14,
 									true);
 							break;
 						}
@@ -308,13 +382,119 @@ public class MainActivity extends LayoutGameActivity implements
 				})));
 		mGameScene.attachChild(mPet);
 
+		final Path path2 = new Path(5).to(70, 160).to(70, CAMERA_HEIGHT - 74)
+				.to(CAMERA_WIDTH / 2 - 58, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH / 2 - 58, 160).to(70, 160);
+		mWolf.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+				60, path2, null, new IPathModifierListener() {
+					@Override
+					public void onPathStarted(final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+
+					@Override
+					public void onPathWaypointStarted(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+						switch (pWaypointIndex) {
+						case 0:
+							mWolf.animate(new long[] { 200, 200, 200 }, 54, 56,
+									true);
+							break;
+						case 1:
+							mWolf.animate(new long[] { 200, 200, 200 }, 78, 80,
+									true);
+							break;
+						case 2:
+							mWolf.animate(new long[] { 200, 200, 200 }, 90, 92,
+									true);
+							break;
+						case 3:
+							mWolf.animate(new long[] { 200, 200, 200 }, 66, 68,
+									true);
+							break;
+						}
+					}
+
+					@Override
+					public void onPathWaypointFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+
+					}
+
+					@Override
+					public void onPathFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+				})));
+		mGameScene.attachChild(mWolf);
+
+		final Path path3 = new Path(5).to(centerX + 160, centerY - 50)
+				.to(centerX + 160, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH / 2 - 58, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH / 2 - 58, centerY - 50)
+				.to(centerX + 160, centerY - 50);
+		mBoar.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+				60, path3, null, new IPathModifierListener() {
+					@Override
+					public void onPathStarted(final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+
+					@Override
+					public void onPathWaypointStarted(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+						switch (pWaypointIndex) {
+						case 0:
+							mBoar.animate(new long[] { 200, 200, 200 }, 84, 86,
+									true);
+							break;
+						case 1:
+							mBoar.animate(new long[] { 200, 200, 200 }, 60, 62,
+									true);
+							break;
+						case 2:
+							mBoar.animate(new long[] { 200, 200, 200 }, 48, 50,
+									true);
+							break;
+						case 3:
+							mBoar.animate(new long[] { 200, 200, 200 }, 72, 74,
+									true);
+							break;
+						}
+					}
+
+					@Override
+					public void onPathWaypointFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+
+					}
+
+					@Override
+					public void onPathFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+				})));
+		mGameScene.attachChild(mBoar);
+		mGameScene.attachChild(mCocoTree);
+		// mGameScene.attachChild(mButterfly);
+
 		// Analog control
 		final AnalogOnScreenControl analogOnScreenControl = new AnalogOnScreenControl(
 				0, CAMERA_HEIGHT
 						- this.mOnScreenControlBaseTextureRegion.getHeight(),
 				this.mCamera, this.mOnScreenControlBaseTextureRegion,
 				this.mOnScreenControlKnobTextureRegion, 0.1f, 200,
-				this.getVertexBufferObjectManager(),
+				mVertexBufferObjectManager,
 				new IAnalogOnScreenControlListener() {
 					@Override
 					public void onControlChange(
@@ -356,6 +536,9 @@ public class MainActivity extends LayoutGameActivity implements
 			}
 		});
 
+		// attach fonts
+		attachFonts(mGameScene);
+
 		// start music
 		this.myMusic.play();
 		this.myMusic.setVolume(0.5f, 1.0f);
@@ -388,6 +571,12 @@ public class MainActivity extends LayoutGameActivity implements
 				onBackPressed();
 			default:
 				break;
+			}
+		}
+
+		if (keyCode == KeyEvent.ACTION_UP) {
+			if (mPlayer.isAnimationRunning()) {
+				mPlayer.stopAnimation();
 			}
 		}
 		return false;
@@ -433,27 +622,33 @@ public class MainActivity extends LayoutGameActivity implements
 		return false;
 	}
 
+	float mSeconds = 0.0f;
+	private int atecount = 10;
+
 	private class GameUpdateHandler implements IUpdateHandler {
 
 		@Override
 		public void onUpdate(float pSecondsElapsed) {
-			if (mPlayer.collidesWith(mPet)) {
-				// mGameScene.detachChild(mPet);
+
+			mSeconds = mSeconds + pSecondsElapsed;
+			int time = (int) mSeconds;
+			Log.d("Gaurav", " TIME = " + time);
+			DecimalFormat format = new DecimalFormat("##.#");
+			String formatted = format.format(mSeconds);
+			mEngineUpdateText.setText(" " + formatted);
+
+			IShape pet = (IShape) mGameScene.getChildByTag(100);
+			if (mPlayer.collidesWith(pet)) {
+				mGameScene.detachChild(mPet);
 			}
 
-			if (mGameScene.getChildByMatcher(new IEntityMatcher() {
-
-				@Override
-				public boolean matches(IEntity pEntity) {
-					if (pEntity == mPet)
-						return true;
-					else
-						return false;
-				}
-			}) == null) {
-				// showGameOver();
+			if (mGameScene.getChildByTag(100) == null) {
+				showGameOver(time);
 			}
 
+			if (time != 0 && time % 10 == 0) {
+				// mEatenText.setText((--atecount) + "");
+			}
 			float balance = (1 + (mPet.getX() - mPlayer.getX())
 					/ (CAMERA_WIDTH / 2)) / 2;
 			float distance = (float) Math.sqrt((mPet.getX() - mPlayer.getX())
@@ -477,20 +672,60 @@ public class MainActivity extends LayoutGameActivity implements
 		}
 	}
 
-	private void showGameOver() {
-		this.runOnUiThread(new Runnable() {
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				Toast.makeText(MainActivity.this,
-						"Yaay! You saved your Pet. Now enjoy!",
-						Toast.LENGTH_LONG).show();
-			}
-		});
-
-		// mGameScene.detachChildren();
-		// mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
+	private void showGameOver(final int time) {
+		int bonus = 0;
+		String congo = "";
+		if (time < 20) {
+			bonus = 100;
+			congo = "Awesome!";
+		} else if (time < 30) {
+			bonus = 50;
+			congo = "Congrats!";
+		} else if (time < 50) {
+			bonus = 30;
+			congo = "Try Harder!";
+		} else {
+			bonus = 10;
+			congo = "Dont you love your pet?";
+		}
+		toastOnUIThread("Yaay! You saved your Pet. You took " + time
+				+ " secs to save him. Your Bonding is " + (time + bonus)
+				+ " points." + congo);
+		Log.d("GAURAV", "SHOWGAMEOVERCALLED");
+		mGameScene.clearChildScene();
+		mGameScene.detachChildren();
+		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
 	}
 
+	private void loadFont() {
+		FontFactory.setAssetBasePath("font/");
+		final ITexture wonLostFontTexture = new BitmapTextureAtlas(
+				this.getTextureManager(), 400, 600, TextureOptions.BILINEAR);
+		// Font
+		this.mFont = FontFactory.create(getFontManager(), getTextureManager(),
+				100, 100, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20);
+		this.mFont.load();
+
+		this.mWonLostFont = FontFactory.createFromAsset(this.getFontManager(),
+				wonLostFontTexture, this.getAssets(), "KingdomOfHearts.ttf",
+				60, true, Color.RED);
+		this.mWonLostFont.load();
+	}
+
+	private void attachFonts(Scene mScene) {
+		// Texts
+		mEatsText = new Text(10, 40, mFont, "Pets Life : ",
+				mVertexBufferObjectManager);
+		mEatenText = new Text(mEatsText.getWidth() + 10, 40, mFont, "10", 100,
+				mVertexBufferObjectManager);
+		Text update = new Text(10, 65, mFont, " Time : ", 100,
+				mVertexBufferObjectManager);
+		mEngineUpdateText = new Text(update.getWidth() + 10, 65, mFont, " 0 ",
+				100, mVertexBufferObjectManager);
+		mScene.attachChild(mEatsText);
+		mScene.attachChild(mEatenText);
+		mScene.attachChild(update);
+		mScene.attachChild(mEngineUpdateText);
+
+	}
 }
