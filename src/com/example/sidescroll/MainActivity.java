@@ -160,10 +160,10 @@ public class MainActivity extends LayoutGameActivity implements
 		}
 		// Pet resources
 		this.mPetTextureAtlas = new BitmapTextureAtlas(
-				this.getTextureManager(), 150, 150);
+				this.getTextureManager(), 150, 200);
 		this.mPetTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mPetTextureAtlas, this, "pet.png",
-						0, 0, 3, 3);
+						0, 0, 3, 4);
 		this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH,
 				CAMERA_HEIGHT, this.getTextureManager(),
 				AssetBitmapTextureAtlasSource.create(this.getAssets(),
@@ -233,60 +233,79 @@ public class MainActivity extends LayoutGameActivity implements
 				.getHeight()) / 2;
 
 		/* Create the sprite and add it to the scene. */
-		mPet = new AnimatedSprite(centerX, centerY, 48, 64,
+		mPet = new AnimatedSprite(centerX, centerY, 24, 32,
 				this.mPetTextureRegion, this.getVertexBufferObjectManager());
 
 		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
 
-		// mPet.registerEntityModifier(new LoopEntityModifier(new
-		// PathModifier(30,
-		// path, null, new IPathModifierListener() {
-		// @Override
-		// public void onPathStarted(final PathModifier pPathModifier,
-		// final IEntity pEntity) {
-		//
-		// }
-		//
-		// @Override
-		// public void onPathWaypointStarted(
-		// final PathModifier pPathModifier,
-		// final IEntity pEntity, final int pWaypointIndex) {
-		// switch (pWaypointIndex) {
-		// case 0:
-		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-		// true);
-		// break;
-		// case 1:
-		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-		// true);
-		// break;
-		// case 2:
-		// mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
-		// true);
-		// break;
-		// case 3:
-		// mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
-		// true);
-		// break;
-		// }
-		// }
-		//
-		// @Override
-		// public void onPathWaypointFinished(
-		// final PathModifier pPathModifier,
-		// final IEntity pEntity, final int pWaypointIndex) {
-		//
-		// }
-		//
-		// @Override
-		// public void onPathFinished(
-		// final PathModifier pPathModifier,
-		// final IEntity pEntity) {
-		//
-		// }
-		// })));
+		final Path path2 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH/2 - 58, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+		
+		final Path path3 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH/2 - 58, 10).to(10, 10);
+		
+		final Path path4 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT/2 - 74)
+		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+		
+		final Path path5 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT/2 - 74)
+		.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+		
+		final Path path6 = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+		.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT/2 - 74)
+		.to(CAMERA_WIDTH/2 - 58, 10).to(10, 10);
+		
+		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(30,
+				path6, null, new IPathModifierListener() {
+					@Override
+					public void onPathStarted(final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+
+					@Override
+					public void onPathWaypointStarted(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+						switch (pWaypointIndex) {
+						case 0:
+							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+									true);
+							break;
+						case 1:
+							mPet.animate(new long[] { 200, 200, 200 }, 3, 5,
+									true);
+							break;
+						case 2:
+							mPet.animate(new long[] { 200, 200, 200 }, 6, 8,
+									true);
+							break;
+						case 3:
+							mPet.animate(new long[] { 200, 200, 200 }, 9, 11,
+									true);
+							break;
+						}
+					}
+
+					@Override
+					public void onPathWaypointFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+
+					}
+
+					@Override
+					public void onPathFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity) {
+
+					}
+				})));
 		mGameScene.attachChild(mPet);
 
 		// Analog control
