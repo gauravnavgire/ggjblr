@@ -119,7 +119,10 @@ public class MainActivity extends LayoutGameActivity implements
 	// 6. Game Elements
 	private GameUpdateHandler mGameUpdateHandler;
 	private Sound mySound;
-	private Music myMusic;
+	private Music heartBeat;
+	private Music waterSound;
+	private Sound wolfSound;
+	private Music grassWalk;
 
 	public float pLeftVolume = 1;
 
@@ -158,9 +161,22 @@ public class MainActivity extends LayoutGameActivity implements
 
 	private void loadAudio() {
 		try {
-			this.myMusic = MusicFactory.createMusicFromAsset(
+			this.heartBeat = MusicFactory.createMusicFromAsset(
 					this.mEngine.getMusicManager(), this, "heartbeat.ogg");
-			this.myMusic.setLooping(true);
+			this.heartBeat.setLooping(true);
+
+			this.waterSound = MusicFactory.createMusicFromAsset(
+					this.mEngine.getMusicManager(), this, "water.ogg");
+			this.waterSound.setLooping(true);
+
+			this.wolfSound = SoundFactory.createSoundFromAsset(
+					this.getSoundManager(), this, "wolf.ogg");
+			this.wolfSound.setVolume(0.5f);
+
+			this.grassWalk = MusicFactory.createMusicFromAsset(
+					this.mEngine.getMusicManager(), this, "grasswalk.ogg");
+			this.grassWalk.setLooping(true);
+
 		} catch (final IOException e) {
 			Debug.e(e);
 		}
@@ -510,7 +526,7 @@ public class MainActivity extends LayoutGameActivity implements
 				this.getVertexBufferObjectManager());
 
 		float overlayX = playerCenterX - mOverlay.getWidth() / 2;
-		float overlayY = playerCenterY - mOverlay.getHeight() / 2+40;
+		float overlayY = playerCenterY - mOverlay.getHeight() / 2 + 40;
 
 		mOverlay.setX(overlayX);
 		mOverlay.setY(overlayY);
@@ -582,8 +598,16 @@ public class MainActivity extends LayoutGameActivity implements
 		attachFonts(mGameScene);
 
 		// start music
-		this.myMusic.play();
-		this.myMusic.setVolume(1.0f, 1.0f);
+		this.heartBeat.play();
+		this.heartBeat.setVolume(0);
+
+		this.waterSound.play();
+		this.waterSound.setVolume(0);
+
+		this.grassWalk.play();
+		this.grassWalk.setVolume(0);
+
+		this.wolfSound.play();
 	}
 
 	@Override
@@ -720,26 +744,40 @@ public class MainActivity extends LayoutGameActivity implements
 			if (time != 0 && time % 10 == 0) {
 				// mEatenText.setText((--atecount) + "");
 			}
-			float balance = (1 + (mPet.getX() - mPlayer.getX())
-					/ (CAMERA_WIDTH / 2)) / 2;
-			float distance = (float) Math.sqrt((mPet.getX() - mPlayer.getX())
-					* (mPet.getX() - mPlayer.getX())
-					+ ((mPet.getY() - mPlayer.getY()) * (mPet.getY() - mPlayer
-							.getY())));
-			if (distance < 200) {
-				distance = distance / 200;
-				myMusic.setVolume((pLeftVolume * (1 - balance))
-						* (1 - distance), (pRightVolume * balance)
-						* (1 - distance));
-			} else {
-				myMusic.setVolume(0, 0);
-			}
+
+			// playSound
+			playIfNear(heartBeat, mPet, mPlayer, 200);
+
+			playIfNear(waterSound, mPond, mPlayer, 180);
+
+			playIfNear(grassWalk, mBoar, mPlayer, 180);
+
+			playIfNear(grassWalk, mWolf, mPlayer, 180);
+
 		}
 
 		@Override
 		public void reset() {
 			// TODO Auto-generated method stub
 
+		}
+	}
+
+	private void playIfNear(Music music, Sprite source, Sprite receiver,
+			int thresholdDist) {
+		float balance = (1 + (source.getX() - receiver.getX())
+				/ (CAMERA_WIDTH / 2)) / 2;
+		float distance = (float) Math
+				.sqrt((source.getX() - receiver.getX())
+						* (source.getX() - receiver.getX())
+						+ ((source.getY() - receiver.getY()) * (source.getY() - receiver
+								.getY())));
+		if (distance < thresholdDist) {
+			distance = distance / thresholdDist;
+			music.setVolume((pLeftVolume * (1 - balance)) * (1 - distance),
+					(pRightVolume * balance) * (1 - distance));
+		} else {
+			music.setVolume(0, 0);
 		}
 	}
 
