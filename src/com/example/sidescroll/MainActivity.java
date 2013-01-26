@@ -124,6 +124,8 @@ public class MainActivity extends LayoutGameActivity implements
 	private Sound wolfSound;
 	private Music grassWalk;
 
+	private boolean movingFwd = true;
+
 	public float pLeftVolume = 1;
 
 	public float pRightVolume = 1;
@@ -221,7 +223,7 @@ public class MainActivity extends LayoutGameActivity implements
 		this.mOverlayTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), CAMERA_WIDTH * 2, CAMERA_HEIGHT * 2);
 		this.mOverlayTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(mOverlayTextureAtlas, this, "overlaybg2.png",
+				.createFromAsset(mOverlayTextureAtlas, this, "overlaybg4.png",
 						0, 0);
 		this.mOverlayTextureAtlas.load();
 
@@ -287,9 +289,10 @@ public class MainActivity extends LayoutGameActivity implements
 		mPlayer = new AnimatedSprite(250, 220, mPlayerTextureRegion,
 				mVertexBufferObjectManager);
 		mPlayer.setTag(1);
-		long[] eachFrmTime = { 200, 200, 200, 200 };
-		int[] eachFrm = { 8, 9, 10, 11 };
-		mPlayer.animate(eachFrmTime, eachFrm);
+		final long[] playerFrmTime = { 200, 200, 200, 200 };
+		final int[] playerFwdFrms = { 8, 9, 10, 11 };
+		final int[] playerBwdFrms = { 4, 5, 6, 7 };
+		mPlayer.animate(playerFrmTime, playerFwdFrms);
 
 		mGameScene.attachChild(mPlayer);
 		final PhysicsHandler physicsHandler = new PhysicsHandler(mPlayer);
@@ -525,7 +528,7 @@ public class MainActivity extends LayoutGameActivity implements
 		mOverlay = new Sprite(0, 0, mOverlayTextureRegion,
 				this.getVertexBufferObjectManager());
 
-		float overlayX = playerCenterX - mOverlay.getWidth() / 2 + 20;
+		float overlayX = playerCenterX - mOverlay.getWidth() / 2;
 		float overlayY = playerCenterY - mOverlay.getHeight() / 2 + 40;
 
 		mOverlay.setX(overlayX);
@@ -549,6 +552,17 @@ public class MainActivity extends LayoutGameActivity implements
 							final BaseOnScreenControl pBaseOnScreenControl,
 							final float pValueX, final float pValueY) {
 						float incX = 0, incY = 0;
+
+						if (pValueX > 0 && !movingFwd) {
+							mPlayer.animate(playerFrmTime, playerFwdFrms);
+							movingFwd = true;
+						}
+
+						if (pValueX < 0 && movingFwd) {
+							mPlayer.animate(playerFrmTime, playerBwdFrms);
+							movingFwd = false;
+						}
+
 						// left
 						if (mPlayer.getX() >= 0 && pValueX > 0) {
 							incX = pValueX * 100;
@@ -557,7 +571,7 @@ public class MainActivity extends LayoutGameActivity implements
 						if (mPlayer.getX() < 0) {
 							mPlayer.setX(0);
 							mOverlay.setX(mPlayer.getWidth() / 2
-									- mOverlay.getWidth() / 2 + 20);
+									- mOverlay.getWidth() / 2);
 							incX = 0;
 						}
 
@@ -582,7 +596,7 @@ public class MainActivity extends LayoutGameActivity implements
 						if (mPlayer.getX() + mPlayer.getWidth() > CAMERA_WIDTH - 20) {
 							mPlayer.setX(CAMERA_WIDTH - mPlayer.getWidth() - 20);
 							mOverlay.setX(mPlayer.getX() + mPlayer.getWidth()
-									/ 2 - mOverlay.getWidth() / 2 + 20);
+									/ 2 - mOverlay.getWidth() / 2);
 							incX = 0;
 						}
 
