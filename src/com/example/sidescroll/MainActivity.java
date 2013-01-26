@@ -258,6 +258,7 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 		mPlayer = new AnimatedSprite(250, 220, mPlayerTextureRegion,
 				mVertexBufferObjectManager);
+		mPlayer.setTag(1);
 		long[] eachFrmTime = { 200, 200, 200, 200 };
 		int[] eachFrm = { 8, 9, 10, 11 };
 		mPlayer.animate(eachFrmTime, eachFrm);
@@ -533,6 +534,13 @@ public class MainActivity extends LayoutGameActivity implements
 				Toast.makeText(MainActivity.this,
 						"Its dark our there! You have save your Pet.",
 						Toast.LENGTH_LONG).show();
+
+				Toast.makeText(MainActivity.this,
+						"Listen to your pets heart beating.", Toast.LENGTH_LONG)
+						.show();
+				Toast.makeText(MainActivity.this,
+						"Beware of other deadly animals and Environment.",
+						Toast.LENGTH_LONG).show();
 			}
 		});
 
@@ -640,9 +648,38 @@ public class MainActivity extends LayoutGameActivity implements
 			IShape pet = (IShape) mGameScene.getChildByTag(100);
 			if (mPlayer.collidesWith(pet)) {
 				mGameScene.detachChild(mPet);
+			} else if (mPlayer.collidesWith(mBoar)
+					|| mPlayer.collidesWith(mWolf)) {
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						Toast.makeText(
+								MainActivity.this,
+								"You were killed by deadly creature. Beware of them in the night.",
+								Toast.LENGTH_LONG).show();
+					}
+				});
+				mGameScene.detachChild(mPlayer);
+			} else if (mPlayer.collidesWith(mPond)) {
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						Toast.makeText(
+								MainActivity.this,
+								"You drowned. Do not go near lake. Its dangerous.",
+								Toast.LENGTH_LONG).show();
+					}
+				});
+				mGameScene.detachChild(mPlayer);
 			}
 
 			if (mGameScene.getChildByTag(100) == null) {
+				showGameWon(time);
+			} else if (mGameScene.getChildByTag(1) == null) {
 				showGameOver(time);
 			}
 
@@ -672,7 +709,7 @@ public class MainActivity extends LayoutGameActivity implements
 		}
 	}
 
-	private void showGameOver(final int time) {
+	private void showGameWon(final int time) {
 		int bonus = 0;
 		String congo = "";
 		if (time < 20) {
@@ -688,13 +725,34 @@ public class MainActivity extends LayoutGameActivity implements
 			bonus = 10;
 			congo = "Dont you love your pet?";
 		}
-		toastOnUIThread("Yaay! You saved your Pet. You took " + time
-				+ " secs to save him. Your Bonding is " + (time + bonus)
-				+ " points." + congo);
+		// toastOnUIThread("Yaay! You saved your Pet. You took " + time
+		// + " secs to save him. Your Bonding is " + (time + bonus)
+		// + " points." + congo);
 		Log.d("GAURAV", "SHOWGAMEOVERCALLED");
 		mGameScene.clearChildScene();
 		mGameScene.detachChildren();
 		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
+
+		mEatsText = new Text(50, 150, mWonLostFont,
+				"\t\t\t\t\t\t\t\tYaay!\n You saved your Pet.\n You took " + time
+						+ " secs to save him.\n Your Bonding is "
+						+ (time + bonus) + " points.\n " + congo,
+				mVertexBufferObjectManager);
+		mGameScene.attachChild(mEatsText);
+	}
+
+	private void showGameOver(final int time) {
+		// toastOnUIThread("Sorry! You were not able save your pet. You took "
+		// + time + " secs to search him. Your Bonding is 0 points.");
+		mGameScene.clearChildScene();
+		mGameScene.detachChildren();
+		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
+		// Create gameover image and attach it
+		mEatsText = new Text(50, 150, mWonLostFont,
+				"\t\t\t\t\t\t\t\tSorry!\n You were not able save your pet.\n You tried for " + time
+						+ " secs.\n Your Bonding is 0 points.",
+				mVertexBufferObjectManager);
+		mGameScene.attachChild(mEatsText);
 	}
 
 	private void loadFont() {
@@ -707,8 +765,8 @@ public class MainActivity extends LayoutGameActivity implements
 		this.mFont.load();
 
 		this.mWonLostFont = FontFactory.createFromAsset(this.getFontManager(),
-				wonLostFontTexture, this.getAssets(), "KingdomOfHearts.ttf",
-				60, true, Color.RED);
+				wonLostFontTexture, this.getAssets(), "Plok.ttf",
+				25, true, Color.RED);
 		this.mWonLostFont.load();
 	}
 
