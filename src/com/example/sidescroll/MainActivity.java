@@ -123,6 +123,7 @@ public class MainActivity extends LayoutGameActivity implements
 	private Music waterSound;
 	private Sound wolfSound;
 	private Music grassWalk;
+	private Music nightSound;
 
 	private boolean movingFwd = true;
 
@@ -173,11 +174,15 @@ public class MainActivity extends LayoutGameActivity implements
 
 			this.wolfSound = SoundFactory.createSoundFromAsset(
 					this.getSoundManager(), this, "wolf.ogg");
-			this.wolfSound.setVolume(0.5f);
+			this.wolfSound.setVolume(0.3f);
 
 			this.grassWalk = MusicFactory.createMusicFromAsset(
 					this.mEngine.getMusicManager(), this, "grasswalk.ogg");
 			this.grassWalk.setLooping(true);
+
+			this.nightSound = MusicFactory.createMusicFromAsset(
+					this.mEngine.getMusicManager(), this, "nightsound.ogg");
+			this.nightSound.setLooping(true);
 
 		} catch (final IOException e) {
 			Debug.e(e);
@@ -671,7 +676,11 @@ public class MainActivity extends LayoutGameActivity implements
 		this.grassWalk.play();
 		this.grassWalk.setVolume(0);
 
+		this.nightSound.play();
+		this.nightSound.setVolume(0.3f);
+
 		this.wolfSound.play();
+		this.wolfSound.setVolume(0.3f);
 	}
 
 	@Override
@@ -812,11 +821,11 @@ public class MainActivity extends LayoutGameActivity implements
 			// playSound
 			playIfNear(heartBeat, mPet, mPlayer, 200);
 
-			playIfNear(waterSound, mPond, mPlayer, 180);
+			playIfNear(waterSound, mPond, mPlayer, 150);
 
-			playIfNear(grassWalk, mBoar, mPlayer, 180);
+			playIfNear(grassWalk, mBoar, mPlayer, 200);
 
-			playIfNear(grassWalk, mWolf, mPlayer, 180);
+			playIfNear(grassWalk, mWolf, mPlayer, 200);
 
 		}
 
