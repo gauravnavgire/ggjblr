@@ -27,7 +27,10 @@ import org.andengine.entity.modifier.ScaleModifier;
 import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.andengine.entity.modifier.PathModifier.Path;
+import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
+import org.andengine.entity.scene.ITouchArea;
+import org.andengine.entity.scene.ITouchArea.ITouchAreaMatcher;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
@@ -65,7 +68,7 @@ import android.view.KeyEvent;
 import android.widget.Toast;
 
 public class MainActivity extends LayoutGameActivity implements
-		IOnSceneTouchListener {
+		IOnSceneTouchListener, IOnAreaTouchListener {
 
 	// Scene properties
 	public enum SceneType {
@@ -92,6 +95,9 @@ public class MainActivity extends LayoutGameActivity implements
 
 	// 2. Menu Scene
 	private Scene mMenuScene;
+	private TextureRegion mMainMenuBgTex, mPlayTex, mTitleTex, mCreditsTex,
+			mQuitTex, mBackTex;
+	private Sprite mMainMenuBg, mTitle, mPlay, mCredits, mQuit, mBack;
 
 	// 3. Options Scene
 	private Scene mOptionsScene;
@@ -156,6 +162,7 @@ public class MainActivity extends LayoutGameActivity implements
 		SoundFactory.setAssetBasePath("mfx/");
 		MusicFactory.setAssetBasePath("mfx/");
 		loadSplashSceneResources();
+		loadMainMenuResources();
 		loadGameSceneResources();
 		loadFont();
 		loadAudio();
@@ -238,9 +245,6 @@ public class MainActivity extends LayoutGameActivity implements
 		// Pet resources
 		this.mPetTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), 700, 700);
-		// this.mPetTextureRegion = BitmapTextureAtlasTextureRegionFactory
-		// .createTiledFromAsset(this.mPetTextureAtlas, this, "pet.png",
-		// 0, 0, 3, 4);
 
 		this.mAnimalsTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mPetTextureAtlas, this,
@@ -281,11 +285,86 @@ public class MainActivity extends LayoutGameActivity implements
 					public void onTimePassed(TimerHandler pTimerHandler) {
 						mEngine.unregisterUpdateHandler(pTimerHandler);
 						mSplash.detachSelf();
-						setGameScene();
+						setMenuScene();
 					}
 				}));
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 
+	}
+
+	public void setMenuScene() {
+		this.mMenuScene = new Scene();
+		mMainMenuBg = new Sprite(0, 0, this.mMainMenuBgTex,
+				mVertexBufferObjectManager);
+		mTitle = new Sprite(40, 60, this.mTitleTex, mVertexBufferObjectManager);
+		mPlay = new Sprite(220, 180, this.mPlayTex, mVertexBufferObjectManager);
+		mCredits = new Sprite(220, 250, this.mCreditsTex,
+				mVertexBufferObjectManager);
+		mQuit = new Sprite(CAMERA_WIDTH - 125, CAMERA_HEIGHT - 128,
+				this.mQuitTex, mVertexBufferObjectManager);
+		mQuit.setTag(501);
+		mBack = new Sprite(CAMERA_WIDTH - 125, CAMERA_HEIGHT - 128,
+				this.mBackTex, mVertexBufferObjectManager);
+		mBack.setTag(502);
+		mMenuScene.attachChild(mMainMenuBg);
+		mMenuScene.attachChild(mTitle);
+		mMenuScene.attachChild(mPlay);
+		mMenuScene.attachChild(mCredits);
+		mMenuScene.attachChild(mQuit);
+		mMenuScene.registerTouchArea(mPlay);
+		mMenuScene.registerTouchArea(mCredits);
+		mMenuScene.registerTouchArea(mQuit);
+		mMenuScene.registerTouchArea(mBack);
+		mMenuScene.setTouchAreaBindingOnActionDownEnabled(true);
+		mMenuScene.setOnAreaTouchListener(this);
+		this.mEngine.setScene(mMenuScene);
+	}
+
+	private void loadMainMenuResources() {
+		BitmapTextureAtlas btmpMenu = new BitmapTextureAtlas(
+				getTextureManager(), 2800, 2480);
+		mMainMenuBgTex = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(btmpMenu, this, "menu/menubg.png", 0, 0);
+
+		mTitleTex = BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+				btmpMenu, this, "menu/title.png", 0,
+				(int) mMainMenuBgTex.getHeight() + 1);
+
+		mPlayTex = BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+				btmpMenu, this, "menu/play.png", 0,
+				(int) mMainMenuBgTex.getHeight() + (int) mTitleTex.getHeight());
+
+		mCreditsTex = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(
+						btmpMenu,
+						this,
+						"menu/credits.png",
+						0,
+						((int) mMainMenuBgTex.getHeight()
+								+ (int) mTitleTex.getHeight() + (int) mMainMenuBgTex
+								.getHeight()));
+
+		mQuitTex = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(
+						btmpMenu,
+						this,
+						"menu/quit.png",
+						0,
+						((int) mMainMenuBgTex.getHeight()
+								+ (int) mTitleTex.getHeight() + (int) mMainMenuBgTex
+								.getHeight())
+								+ (int) mMainMenuBgTex.getHeight());
+
+		mBackTex = BitmapTextureAtlasTextureRegionFactory.createFromAsset(
+				btmpMenu,
+				this,
+				"menu/back.png",
+				0,
+				((int) mMainMenuBgTex.getHeight() + (int) mTitleTex.getHeight()
+						+ (int) mMainMenuBgTex.getHeight() + (int) mQuitTex
+						.getHeight()) + (int) mMainMenuBgTex.getHeight());
+
+		btmpMenu.load();
 	}
 
 	protected void setGameScene() {
@@ -323,7 +402,7 @@ public class MainActivity extends LayoutGameActivity implements
 				mVertexBufferObjectManager);
 		mCocoTree = new Sprite(420, 120, this.mCocoTreeTextureRegion,
 				mVertexBufferObjectManager);
-		mPond = new Sprite(350, 300, this.mPondTextureRegion,
+		mPond = new Sprite(350, 330, this.mPondTextureRegion,
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mDeadTree);
 		// mGameScene.attachChild(mNiceTree);
@@ -354,9 +433,11 @@ public class MainActivity extends LayoutGameActivity implements
 		int[] bflyFrm = { 57, 58, 59 };
 		mButterfly.animate(bflyFrmTime, bflyFrm);
 
-		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+		final Path path = new Path(10).to(10, 10).to(10, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
-				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+				.to(CAMERA_WIDTH - 58, 10).to(CAMERA_WIDTH /2, 10)
+				.to(CAMERA_WIDTH /2, CAMERA_HEIGHT /2)
+				.to(10, 10).to(CAMERA_WIDTH -258, 10).to(CAMERA_WIDTH -258, CAMERA_HEIGHT/2+50).to(10, 10);
 
 		final Path path4 = new Path(5).to(10, 10)
 				.to(10, CAMERA_HEIGHT / 2 - 74)
@@ -371,7 +452,7 @@ public class MainActivity extends LayoutGameActivity implements
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(10, CAMERA_HEIGHT / 2 - 74).to(10, 10);
 
-		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(60,
+		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(100,
 				path, null, new IPathModifierListener() {
 					@Override
 					public void onPathStarted(final PathModifier pPathModifier,
@@ -397,6 +478,30 @@ public class MainActivity extends LayoutGameActivity implements
 									true);
 							break;
 						case 3:
+							mPet.animate(new long[] { 200, 200, 200 }, 12, 14,
+									true);
+							break;
+						case 4:
+							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+									true);
+							break;
+						case 5:
+							mPet.animate(new long[] { 200, 200, 200 }, 12, 14,
+									true);
+							break;
+						case 6:
+							mPet.animate(new long[] { 200, 200, 200 }, 24, 26,
+									true);
+							break;
+						case 7:
+							mPet.animate(new long[] { 200, 200, 200 }, 0, 2,
+									true);
+							break;
+						case 8:
+							mPet.animate(new long[] { 200, 200, 200 }, 12, 14,
+									true);
+							break;
+						case 9:
 							mPet.animate(new long[] { 200, 200, 200 }, 12, 14,
 									true);
 							break;
@@ -471,12 +576,12 @@ public class MainActivity extends LayoutGameActivity implements
 		mGameScene.attachChild(mWolf);
 
 		final Path path3 = new Path(5).to(centerX + 160, centerY - 50)
-				.to(centerX + 160, CAMERA_HEIGHT / 2 - 74)
-				.to(CAMERA_WIDTH / 2 - 58, CAMERA_HEIGHT / 2 - 74)
-				.to(CAMERA_WIDTH / 2 - 58, centerY - 50)
+				.to(centerX + 360, 0)
+				.to(CAMERA_WIDTH /2 - 58, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH -70 - 58, centerY - 50)
 				.to(centerX + 160, centerY - 50);
 		mBoar.registerEntityModifier(new LoopEntityModifier(new PathModifier(
-				60, path3, null, new IPathModifierListener() {
+				50, path3, null, new IPathModifierListener() {
 					@Override
 					public void onPathStarted(final PathModifier pPathModifier,
 							final IEntity pEntity) {
@@ -497,11 +602,11 @@ public class MainActivity extends LayoutGameActivity implements
 									true);
 							break;
 						case 2:
-							mBoar.animate(new long[] { 200, 200, 200 }, 48, 50,
+							mBoar.animate(new long[] { 200, 200, 200 }, 72,74,
 									true);
 							break;
 						case 3:
-							mBoar.animate(new long[] { 200, 200, 200 }, 72, 74,
+							mBoar.animate(new long[] { 200, 200, 200 },60, 62,
 									true);
 							break;
 						}
@@ -723,8 +828,8 @@ public class MainActivity extends LayoutGameActivity implements
 
 	private void loadSplashSceneResources() {
 		// Splash screen
-		mSplashTextureAtlas = new BitmapTextureAtlas(getTextureManager(), 350,
-				256, TextureOptions.DEFAULT);
+		mSplashTextureAtlas = new BitmapTextureAtlas(getTextureManager(),
+				CAMERA_WIDTH, CAMERA_HEIGHT, TextureOptions.DEFAULT);
 		mSplashTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createFromAsset(mSplashTextureAtlas, this, "splash.png", 0, 0);
 		mSplashTextureAtlas.load();
@@ -739,10 +844,6 @@ public class MainActivity extends LayoutGameActivity implements
 				pGLState.enableDither();
 			};
 		};
-		mSplash.setScale(1.5f);
-		mSplash.setPosition(
-				getCenter(CAMERA_WIDTH, mSplashTextureRegion.getWidth()),
-				getCenter(CAMERA_HEIGHT, mSplashTextureRegion.getHeight()));
 		mSplashScene.attachChild(mSplash);
 	}
 
@@ -754,10 +855,16 @@ public class MainActivity extends LayoutGameActivity implements
 
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+		Log.d("GAURAV ", "onSceneTouchEvent,pScene = " + pScene);
 		if (pSceneTouchEvent.isActionDown()) {
 			Sprite s = (Sprite) pScene.getChildByTag(mPlayer.getTag());
 			s.setPosition(s.getX() + (i++), s.getY());
 		}
+
+		if (pScene == mMenuScene) {
+
+		}
+
 		return false;
 	}
 
@@ -771,7 +878,6 @@ public class MainActivity extends LayoutGameActivity implements
 
 			mSeconds = mSeconds + pSecondsElapsed;
 			int time = (int) mSeconds;
-			Log.d("Gaurav", " TIME = " + time);
 			DecimalFormat format = new DecimalFormat("##.#");
 			String formatted = format.format(mSeconds);
 			mEngineUpdateText.setText(" " + formatted);
@@ -881,9 +987,12 @@ public class MainActivity extends LayoutGameActivity implements
 		mEatsText = new Text(50, 150, mWonLostFont,
 				"\t\t\t\t\t\t\t\tYaay!\n You saved your Pet.\n You took "
 						+ time + " secs to save him.\n Your Bonding is "
-						+ (time + bonus) + " points.\n " + congo,
+						+ (time/2 + bonus) + " points.\n " + congo,
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
+		mGameScene.setOnAreaTouchListener(this);
+		mGameScene.registerTouchArea(mBack);
+		mGameScene.attachChild(mBack);
 	}
 
 	private void showGameOver(final int time) {
@@ -898,6 +1007,9 @@ public class MainActivity extends LayoutGameActivity implements
 						+ time + " secs.\n Your Bonding is 0 points.",
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
+		mGameScene.setOnAreaTouchListener(this);
+		mGameScene.registerTouchArea(mBack);
+		mGameScene.attachChild(mBack);
 	}
 
 	private void loadFont() {
@@ -926,10 +1038,64 @@ public class MainActivity extends LayoutGameActivity implements
 				mVertexBufferObjectManager);
 		mEngineUpdateText = new Text(update.getWidth() + 10, 65, mFont, " 0 ",
 				100, mVertexBufferObjectManager);
-		mScene.attachChild(mEatsText);
-		mScene.attachChild(mEatenText);
+		// mScene.attachChild(mEatsText);
+		// mScene.attachChild(mEatenText);
 		mScene.attachChild(update);
 		mScene.attachChild(mEngineUpdateText);
 
+	}
+
+	@Override
+	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
+			ITouchArea pTouchArea, float pTouchAreaLocalX,
+			float pTouchAreaLocalY) {
+		if (pSceneTouchEvent.isActionDown() && pTouchArea.equals(mPlay)) {
+			mMenuScene.detachSelf();
+			setGameScene();
+		} else if (pSceneTouchEvent.isActionDown()
+				&& pTouchArea.equals(mCredits)) {
+			mMenuScene.detachChild(mTitle);
+			mMenuScene.detachChild(mPlay);
+			mMenuScene.detachChild(mCredits);
+			mMenuScene.detachChild(mQuit);
+
+			mEatsText = new Text(50, 120, mWonLostFont,
+					"\t\t\t\t\t\t\t\t Pankaj Bambhani\n\n"
+							+ "\t\t\t\t\t\t\t\t Soumik Pal\n\n"
+							+ "\t\t\t\t\t\t\t\t Kapil Ratnani\n\n"
+							+ "\t\t\t\t\t\t\t\t Gaurav Navgire\n\n",
+					mVertexBufferObjectManager);
+			mMenuScene.attachChild(mEatsText);
+			mMenuScene.attachChild(mBack);
+
+		} else if (pSceneTouchEvent.isActionDown() && pTouchArea.equals(mQuit)
+				&& mMenuScene.getChildByTag(501) == mQuit) {
+			finish();
+		} else if (pSceneTouchEvent.isActionDown()
+				&& pTouchArea.equals(mBack)
+				&& (mMenuScene.getChildByTag(502) == mBack || mGameScene
+						.getChildByTag(502) == mBack)) {
+			if (mEngine.getScene() != mMenuScene) {
+				mGameScene.detachChildren();
+				mGameScene.detachSelf();
+				mEngine.setScene(mMenuScene);
+			} else {
+				mMenuScene.detachChild(mEatsText);
+				mMenuScene.detachChild(mBack);
+			}
+			if (!mTitle.hasParent()) {
+				mMenuScene.attachChild(mTitle);
+			}
+			if (!mPlay.hasParent()) {
+				mMenuScene.attachChild(mPlay);
+			}
+			if (!mCredits.hasParent()) {
+				mMenuScene.attachChild(mCredits);
+			}
+			if (!mQuit.hasParent()) {
+				mMenuScene.attachChild(mQuit);
+			}
+		}
+		return false;
 	}
 }
