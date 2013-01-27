@@ -887,6 +887,7 @@ public class MainActivity extends LayoutGameActivity implements
 				mGameScene.detachChild(mPet);
 			} else if (mPlayer.collidesWith(mBoar)
 					|| mPlayer.collidesWith(mWolf)) {
+				final String animal = mPlayer.collidesWith(mBoar) ? " a Boar":" a Wolf";
 				runOnUiThread(new Runnable() {
 
 					@Override
@@ -894,7 +895,7 @@ public class MainActivity extends LayoutGameActivity implements
 						// TODO Auto-generated method stub
 						Toast.makeText(
 								MainActivity.this,
-								"You were killed by deadly creature. Beware of them in the night.",
+								"You were killed by "+animal+" . Beware of them in the night.",
 								Toast.LENGTH_LONG).show();
 					}
 				});
@@ -1076,6 +1077,7 @@ public class MainActivity extends LayoutGameActivity implements
 				&& (mMenuScene.getChildByTag(502) == mBack || mGameScene
 						.getChildByTag(502) == mBack)) {
 			if (mEngine.getScene() != mMenuScene) {
+				mSeconds=0.0f;
 				mGameScene.detachChildren();
 				mGameScene.detachSelf();
 				mEngine.setScene(mMenuScene);
