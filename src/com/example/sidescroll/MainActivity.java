@@ -138,7 +138,7 @@ public class MainActivity extends LayoutGameActivity implements
 	public float pRightVolume = 1;
 
 	// 7. Texts
-	private Font mFont, mWonLostFont;
+	private Font mFont, mCreditsFont, mWinLoseFont;
 	private Text mEatenText, mEngineUpdateText, mEatsText;
 	private VertexBufferObjectManager mVertexBufferObjectManager;
 
@@ -435,9 +435,10 @@ public class MainActivity extends LayoutGameActivity implements
 
 		final Path path = new Path(10).to(10, 10).to(10, CAMERA_HEIGHT - 74)
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
-				.to(CAMERA_WIDTH - 58, 10).to(CAMERA_WIDTH /2, 10)
-				.to(CAMERA_WIDTH /2, CAMERA_HEIGHT /2)
-				.to(10, 10).to(CAMERA_WIDTH -258, 10).to(CAMERA_WIDTH -258, CAMERA_HEIGHT/2+50).to(10, 10);
+				.to(CAMERA_WIDTH - 58, 10).to(CAMERA_WIDTH / 2, 10)
+				.to(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2).to(10, 10)
+				.to(CAMERA_WIDTH - 258, 10)
+				.to(CAMERA_WIDTH - 258, CAMERA_HEIGHT / 2 + 50).to(10, 10);
 
 		final Path path4 = new Path(5).to(10, 10)
 				.to(10, CAMERA_HEIGHT / 2 - 74)
@@ -452,8 +453,8 @@ public class MainActivity extends LayoutGameActivity implements
 				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
 				.to(10, CAMERA_HEIGHT / 2 - 74).to(10, 10);
 
-		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(100,
-				path, null, new IPathModifierListener() {
+		mPet.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+				100, path, null, new IPathModifierListener() {
 					@Override
 					public void onPathStarted(final PathModifier pPathModifier,
 							final IEntity pEntity) {
@@ -577,8 +578,8 @@ public class MainActivity extends LayoutGameActivity implements
 
 		final Path path3 = new Path(5).to(centerX + 160, centerY - 50)
 				.to(centerX + 360, 0)
-				.to(CAMERA_WIDTH /2 - 58, CAMERA_HEIGHT / 2 - 74)
-				.to(CAMERA_WIDTH -70 - 58, centerY - 50)
+				.to(CAMERA_WIDTH / 2 - 58, CAMERA_HEIGHT / 2 - 74)
+				.to(CAMERA_WIDTH - 70 - 58, centerY - 50)
 				.to(centerX + 160, centerY - 50);
 		mBoar.registerEntityModifier(new LoopEntityModifier(new PathModifier(
 				50, path3, null, new IPathModifierListener() {
@@ -602,11 +603,11 @@ public class MainActivity extends LayoutGameActivity implements
 									true);
 							break;
 						case 2:
-							mBoar.animate(new long[] { 200, 200, 200 }, 72,74,
+							mBoar.animate(new long[] { 200, 200, 200 }, 72, 74,
 									true);
 							break;
 						case 3:
-							mBoar.animate(new long[] { 200, 200, 200 },60, 62,
+							mBoar.animate(new long[] { 200, 200, 200 }, 60, 62,
 									true);
 							break;
 						}
@@ -756,14 +757,14 @@ public class MainActivity extends LayoutGameActivity implements
 			public void run() {
 				// TODO Auto-generated method stub
 				Toast.makeText(MainActivity.this,
-						"Its dark our there! You have save your Pet.",
+						"Its dark our there! You have to save your Pet.",
 						Toast.LENGTH_LONG).show();
 
 				Toast.makeText(MainActivity.this,
-						"Listen to your pets heart beating.", Toast.LENGTH_LONG)
+						"Listen to your pet's heart beats.", Toast.LENGTH_LONG)
 						.show();
 				Toast.makeText(MainActivity.this,
-						"Beware of other deadly animals and Environment.",
+						"Beware of other deadly animals and the environment.",
 						Toast.LENGTH_LONG).show();
 			}
 		});
@@ -786,6 +787,42 @@ public class MainActivity extends LayoutGameActivity implements
 
 		this.wolfSound.play();
 		this.wolfSound.setVolume(0.3f);
+	}
+
+	private void startMusic() {
+		// start music
+		this.heartBeat.play();
+		this.heartBeat.setVolume(0);
+
+		this.waterSound.play();
+		this.waterSound.setVolume(0);
+
+		this.grassWalk.play();
+		this.grassWalk.setVolume(0);
+
+		this.nightSound.play();
+		this.nightSound.setVolume(0.3f);
+
+		this.wolfSound.play();
+		this.wolfSound.setVolume(0.3f);
+	}
+
+	private void stopMusic() {
+		// start music
+		if (heartBeat.isPlaying()) {
+			this.heartBeat.stop();
+		}
+		if (waterSound.isPlaying()) {
+			this.waterSound.stop();
+		}
+		if (grassWalk.isPlaying()) {
+			this.grassWalk.stop();
+		}
+		if (nightSound.isPlaying()) {
+			this.nightSound.stop();
+		}
+		this.wolfSound.stop();
+
 	}
 
 	@Override
@@ -887,7 +924,8 @@ public class MainActivity extends LayoutGameActivity implements
 				mGameScene.detachChild(mPet);
 			} else if (mPlayer.collidesWith(mBoar)
 					|| mPlayer.collidesWith(mWolf)) {
-				final String animal = mPlayer.collidesWith(mBoar) ? " a Boar":" a Wolf";
+				final String animal = mPlayer.collidesWith(mBoar) ? " a Boar"
+						: " a Wolf";
 				runOnUiThread(new Runnable() {
 
 					@Override
@@ -895,7 +933,8 @@ public class MainActivity extends LayoutGameActivity implements
 						// TODO Auto-generated method stub
 						Toast.makeText(
 								MainActivity.this,
-								"You were killed by "+animal+" . Beware of them in the night.",
+								"You were killed by" + animal
+										+ " . Beware of them in the night!",
 								Toast.LENGTH_LONG).show();
 					}
 				});
@@ -908,7 +947,7 @@ public class MainActivity extends LayoutGameActivity implements
 						// TODO Auto-generated method stub
 						Toast.makeText(
 								MainActivity.this,
-								"You drowned. Do not go near lake. Its dangerous.",
+								"You drowned. Do not go near the lake. Its dangerous!",
 								Toast.LENGTH_LONG).show();
 					}
 				});
@@ -962,33 +1001,36 @@ public class MainActivity extends LayoutGameActivity implements
 	}
 
 	private void showGameWon(final int time) {
+		// stop music
+		//stopMusic();
 		int bonus = 0;
+		int penalty = 0;
 		String congo = "";
 		if (time < 20) {
-			bonus = 100;
+
+			// bonus = 100;
 			congo = "Awesome!";
 		} else if (time < 30) {
-			bonus = 50;
+			// bonus = 50;
 			congo = "Congrats!";
 		} else if (time < 50) {
-			bonus = 30;
+			// bonus = 30;
 			congo = "Try Harder!";
 		} else {
-			bonus = 10;
-			congo = "Dont you love your pet?";
+			// bonus = 10;
+			congo = "Don't you love your pet?";
 		}
-		// toastOnUIThread("Yaay! You saved your Pet. You took " + time
-		// + " secs to save him. Your Bonding is " + (time + bonus)
-		// + " points." + congo);
-		Log.d("GAURAV", "SHOWGAMEOVERCALLED");
+
+		penalty = Math.min(100, (time * 5) / 6);
+
 		mGameScene.clearChildScene();
 		mGameScene.detachChildren();
 		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
 
-		mEatsText = new Text(50, 150, mWonLostFont,
+		mEatsText = new Text(120, 150, mWinLoseFont,
 				"\t\t\t\t\t\t\t\tYaay!\n You saved your Pet.\n You took "
-						+ time + " secs to save him.\n Your Bonding is "
-						+ (time/2 + bonus) + " points.\n " + congo,
+						+ time + " secs to save it.\n Your Bonding is "
+						+ (100 - penalty) + "% \n " + congo,
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
 		mGameScene.setOnAreaTouchListener(this);
@@ -997,15 +1039,16 @@ public class MainActivity extends LayoutGameActivity implements
 	}
 
 	private void showGameOver(final int time) {
-		// toastOnUIThread("Sorry! You were not able save your pet. You took "
-		// + time + " secs to search him. Your Bonding is 0 points.");
+		// stop music
+		//stopMusic();
 		mGameScene.clearChildScene();
 		mGameScene.detachChildren();
 		mGameScene.unregisterUpdateHandler(mGameUpdateHandler);
 		// Create gameover image and attach it
-		mEatsText = new Text(50, 150, mWonLostFont,
-				"\t\t\t\t\t\t\t\tSorry!\n You were not able save your pet.\n You tried for "
-						+ time + " secs.\n Your Bonding is 0 points.",
+		mEatsText = new Text(120, 150, mWinLoseFont,
+				"\t\t\t\t\t\t\t\tSorry!\n You were not able to save your pet.\n You tried for "
+						+ time
+						+ " secs.\n Your Bonding is 0 % \n Please try again!",
 				mVertexBufferObjectManager);
 		mGameScene.attachChild(mEatsText);
 		mGameScene.setOnAreaTouchListener(this);
@@ -1017,16 +1060,23 @@ public class MainActivity extends LayoutGameActivity implements
 		FontFactory.setAssetBasePath("font/");
 		final ITexture wonLostFontTexture = new BitmapTextureAtlas(
 				this.getTextureManager(), 400, 600, TextureOptions.BILINEAR);
+		final ITexture creditFontTexture = new BitmapTextureAtlas(
+				this.getTextureManager(), 400, 600, TextureOptions.BILINEAR);
 		// Font
 		this.mFont = FontFactory.create(getFontManager(), getTextureManager(),
 				100, 100, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20,
 				Color.WHITE);
 		this.mFont.load();
 
-		this.mWonLostFont = FontFactory.createFromAsset(this.getFontManager(),
-				wonLostFontTexture, this.getAssets(), "Plok.ttf", 25, true,
+		this.mCreditsFont = FontFactory.createFromAsset(this.getFontManager(),
+				creditFontTexture, this.getAssets(), "Plok.ttf", 25, true,
 				Color.RED);
-		this.mWonLostFont.load();
+		this.mCreditsFont.load();
+
+		this.mWinLoseFont = FontFactory.createFromAsset(this.getFontManager(),
+				wonLostFontTexture, this.getAssets(), "comicbd.ttf", 35, true,
+				Color.RED);
+		this.mWinLoseFont.load();
 	}
 
 	private void attachFonts(Scene mScene) {
@@ -1039,8 +1089,6 @@ public class MainActivity extends LayoutGameActivity implements
 				mVertexBufferObjectManager);
 		mEngineUpdateText = new Text(update.getWidth() + 10, 65, mFont, " 0 ",
 				100, mVertexBufferObjectManager);
-		// mScene.attachChild(mEatsText);
-		// mScene.attachChild(mEatenText);
 		mScene.attachChild(update);
 		mScene.attachChild(mEngineUpdateText);
 
@@ -1060,8 +1108,8 @@ public class MainActivity extends LayoutGameActivity implements
 			mMenuScene.detachChild(mCredits);
 			mMenuScene.detachChild(mQuit);
 
-			mEatsText = new Text(50, 120, mWonLostFont,
-					"\t\t\t\t\t\t\t\t Pankaj Bambhani\n\n"
+			mEatsText = new Text(50, 120, mCreditsFont,
+					"\t\t\t\t\t\t\t\t Pankaj Bhambhani\n\n"
 							+ "\t\t\t\t\t\t\t\t Soumik Pal\n\n"
 							+ "\t\t\t\t\t\t\t\t Kapil Ratnani\n\n"
 							+ "\t\t\t\t\t\t\t\t Gaurav Navgire\n\n",
@@ -1077,7 +1125,7 @@ public class MainActivity extends LayoutGameActivity implements
 				&& (mMenuScene.getChildByTag(502) == mBack || mGameScene
 						.getChildByTag(502) == mBack)) {
 			if (mEngine.getScene() != mMenuScene) {
-				mSeconds=0.0f;
+				mSeconds = 0.0f;
 				mGameScene.detachChildren();
 				mGameScene.detachSelf();
 				mEngine.setScene(mMenuScene);
