@@ -1122,6 +1122,7 @@ public class MainActivity extends LayoutGameActivity implements
 		} else if (pSceneTouchEvent.isActionDown() && pTouchArea.equals(mQuit)
 				&& mMenuScene.getChildByTag(501) == mQuit) {
 			finish();
+			return true;
 		} else if (pSceneTouchEvent.isActionDown()
 				&& pTouchArea.equals(mBack)
 				&& (mMenuScene.getChildByTag(502) == mBack || mGameScene
