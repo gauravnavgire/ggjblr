@@ -298,8 +298,10 @@ public class MainActivity extends LayoutGameActivity implements
 				mVertexBufferObjectManager);
 		mTitle = new Sprite(40, 60, this.mTitleTex, mVertexBufferObjectManager);
 		mPlay = new Sprite(220, 180, this.mPlayTex, mVertexBufferObjectManager);
+		mPlay.setTag(503);
 		mCredits = new Sprite(220, 250, this.mCreditsTex,
 				mVertexBufferObjectManager);
+		mCredits.setTag(504);
 		mQuit = new Sprite(CAMERA_WIDTH - 125, CAMERA_HEIGHT - 128,
 				this.mQuitTex, mVertexBufferObjectManager);
 		mQuit.setTag(501);
@@ -1098,11 +1100,11 @@ public class MainActivity extends LayoutGameActivity implements
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
 			ITouchArea pTouchArea, float pTouchAreaLocalX,
 			float pTouchAreaLocalY) {
-		if (pSceneTouchEvent.isActionDown() && pTouchArea.equals(mPlay)) {
+		if (pSceneTouchEvent.isActionDown() && pTouchArea.equals(mPlay) && mMenuScene.getChildByTag(503) == mPlay) {
 			mMenuScene.detachSelf();
 			setGameScene();
 		} else if (pSceneTouchEvent.isActionDown()
-				&& pTouchArea.equals(mCredits)) {
+				&& pTouchArea.equals(mCredits) && mMenuScene.getChildByTag(504) == mCredits) {
 			mMenuScene.detachChild(mTitle);
 			mMenuScene.detachChild(mPlay);
 			mMenuScene.detachChild(mCredits);
